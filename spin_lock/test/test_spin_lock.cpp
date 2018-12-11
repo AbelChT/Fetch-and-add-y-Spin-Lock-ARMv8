@@ -42,7 +42,9 @@ int main() {
     cout << "Test: " << flush;
     if(thread_counter == 2){
         cout << "OK" << endl;
+        return 0;
     }else{
         cout << "Fail" << endl;
+        return -1;
     }
 }
