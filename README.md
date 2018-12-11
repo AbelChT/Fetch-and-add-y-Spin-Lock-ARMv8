@@ -1,0 +1,14 @@
+# Entorno de pruebas
+Para realizar las pruebas instale Debian de 64 bits: https://github.com/Debian/raspi3-image-spec.
+Esto lo hice ya que de esta forma podía utilizar la arquitectura nativa del Cortex-A53 la cual es ARMv8-A de 64 bits, ya que Raspbian por compatibilidad con versiones anteriores, utiliza ARMv7 de 32 bits.
+Una vez instalado, configuré Debian para tener una ip estática, para poder conectarme a él mediante ethernet. Los ficheros de configuración se encuentran en ConfigSSHEthernet.
+
+# Descripción de carpetas
+### spin_lock
+Implementación de spin_lock y tests unitarios correspondientes
+
+### fetch_and_add
+Implementación de fetch and add y tests unitarios correspondientes
+
+### spin_lock_ee
+Implementación de spin lock energéticamente eficiente y tests correspondientes
