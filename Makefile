@@ -1,9 +1,18 @@
-CC=arm-linux-gnueabihf-
+# ARM AARCH64 compiler path
+CC=/opt/gcc-arm-8.2-aarch64-linux-gnu/bin/aarch64-linux-gnu-
 
-all: main
+# ARM AARCH32 OFFICIAL RASPBIAN compiler path
+# CC=/opt/raspberry-pi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf-
 
-function.o: function.s
-	${CC}gcc -mcpu=cortex-a53 -c function.s -o function.o
+all: test_spin_lock
 
-main: main.cpp function.o
-	${CC}g++ main.cpp function.o -o main
+spin_lock.o: spin_lock/aarch64/spin_lock.s
+	${CC}gcc -c spin_lock/aarch64/spin_lock.s -o build/spin_lock.o
+
+test_spin_lock: spin_lock/test/test_spin_lock.cpp spin_lock.o
+	${CC}g++ -pthread spin_lock/test/test_spin_lock.cpp build/spin_lock.o -o build/test_spin_lock
+
+clean_spin_lock:
+	rm build/spin_lock.o build/test_spin_lock
+
+clean: clean_spin_lock
