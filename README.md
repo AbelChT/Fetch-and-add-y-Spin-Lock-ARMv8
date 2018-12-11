@@ -19,3 +19,8 @@ En la instrucción wfe "se entra en modo de ahorro de energía", ya que el proce
 
 ### Cuestión: ¿Se entera el Sistema Operativo de que el procesador está en modo bajo consumo?
 El sistema operativo no tiene porque enterarse de que se está en bajo consumo, ya que el modo de bajo consumo, entre otras razones se suspende si llega una IRQ (cuando venza el quantum). 
+
+# Ideas a mejorar
+En el spin lock mover los mov fuera del load y store, para reducir al máximo esa región.
+
+Crear una segunda versión utilizando fetch and add si existe, sino implementarlo usando load, store
