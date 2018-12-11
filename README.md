@@ -12,3 +12,10 @@ Implementación de fetch and add y tests unitarios correspondientes
 
 ### spin_lock_ee
 Implementación de spin lock energéticamente eficiente y tests correspondientes
+
+# SPIN‐LOCK ENERGÉTICAMENTE EFICIENTE
+### Cuestión: Identifica dónde entra en modo de ahorro de energía el procesador
+En la instrucción wfe "se entra en modo de ahorro de energía", ya que el procesador esperará a que le envien un evento.
+
+### Cuestión: ¿Se entera el Sistema Operativo de que el procesador está en modo bajo consumo?
+El sistema operativo no tiene porque enterarse de que se está en bajo consumo, ya que el modo de bajo consumo, entre otras razones se suspende si llega una IRQ (cuando venza el quantum). 
