@@ -1,3 +1,7 @@
+//
+// Created by Abel Chils Trabanco
+// On 12/12/18
+//
      .globl   fetch_and_add
      .p2align 2
      .type    fetch_and_add,%function

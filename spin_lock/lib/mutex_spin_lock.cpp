@@ -1,3 +1,8 @@
+//
+// Created by Abel Chils Trabanco
+// On 12/12/18
+//
+
 #include "mutex_spin_lock.h"
 
 extern "C" void spin_lock(int *x);

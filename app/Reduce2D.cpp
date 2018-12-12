@@ -1,3 +1,8 @@
+//
+// Created by Abel Chils Trabanco
+// On 12/12/18
+//
+
 #include "Reduce2D.h"
 
 using namespace std;

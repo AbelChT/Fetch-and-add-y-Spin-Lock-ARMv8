@@ -1,3 +1,7 @@
+//
+// Created by Abel Chils Trabanco
+// On 12/12/18
+//
      .globl   spin_lock
      .p2align 2
      .type    spin_lock,%function

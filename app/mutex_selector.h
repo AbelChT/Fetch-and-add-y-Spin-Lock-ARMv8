@@ -1,4 +1,10 @@
+//
+// Created by Abel Chils Trabanco
+// On 12/12/18
+//
+
 #pragma once
+
 /**
  * Different mutex types to select
  */
@@ -7,11 +13,13 @@
 #define MUTEX_SPIN_LOCK_EE 2
 
 #ifndef SELECTED_MUTEX_TYPE
-    #error "SELECTED_MUTEX_TYPE must be defined"
+#error "SELECTED_MUTEX_TYPE must be defined"
 #endif
 
 #if SELECTED_MUTEX_TYPE == MUTEX_NAIVE
+
 #include <mutex>
+
 #endif
 
 #if SELECTED_MUTEX_TYPE == MUTEX_SPIN_LOCK
