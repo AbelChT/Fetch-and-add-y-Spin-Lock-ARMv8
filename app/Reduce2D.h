@@ -1,17 +1,9 @@
 #pragma once
 
+#include "mutex_selector.h"
 #include <thread>
 
 using namespace std;
-
-/**
- * Different mutex types to select
- */
-#define MUTEX_NAIVE 0
-#define MUTEX_SPIN_LOCK 1
-#define MUTEX_SPIN_LOCK_EE 2
-
-#define SELECTED_MUTEX_TYPE MUTEX_NAIVE
 
 /**
  * WARNING: This class is created for evaluate diferent mutex implementation performance.
@@ -33,7 +25,7 @@ private:
     /**
      * n -> number of elements to process by the thread
      */
-    static void thread_sum(int v[], unsigned int n, int &mutex_variable, int &global_variable);
+    static void thread_sum(int v[], unsigned int n, mutex &mutex_variable, int &global_variable);
 
 public:
     /**

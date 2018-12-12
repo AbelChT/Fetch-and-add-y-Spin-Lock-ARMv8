@@ -3,11 +3,11 @@
      .type    spin_lock,%function
 spin_lock:                 // Function "spin_lock" entry point.
      .cfi_startproc
+     mov w3, #1
      ldaxr w1, [x0]
      cmp w1, #0
      bne spin_lock
-     mov w1, #1
-     stlxr w2, w1, [x0]
+     stlxr w2, w3, [x0]
      cbnz w2, spin_lock   
      ret                  // Return by branching to the address in the link register.
      .cfi_endproc
