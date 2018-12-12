@@ -18,17 +18,29 @@ int main() {
 
     int v[TEST_SIZE];
 
+    int sum_result = 0;
+
     for (int i = 0; i < TEST_SIZE; ++i) {
         v[i] = rand() % 3;
+        sum_result = sum_result + v[i];
     }
 
     cout << "Reduction start ..." << endl;
 
     clock_t begin = clock();
-    Reduce2D::parSum(v, TEST_SIZE);
+    int result = Reduce2D::parSum(v, TEST_SIZE);
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
     cout << "Time taken: " << elapsed_secs << endl;
+
+    cout << "Correction: " << flush;
+
+    if(result == sum_result){
+        cout << "OK" << endl;
+    }else{
+        cout << "FAIL" << endl;
+    }
+
     return 0;
 }

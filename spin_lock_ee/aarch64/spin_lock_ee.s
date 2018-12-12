@@ -27,8 +27,10 @@ spin_lock_ee_loop:
 spin_unlock_ee:
      .cfi_startproc       // Function "spin_unlock" entry point.
      mov w1, #0
+spin_unlock_loop_ee:
      ldaxr w2, [x0]       // Needed to perform later stlxr w2, w1, [x0]
      stlxr w2, w1, [x0]   // Store 0 in the spin_lock variable
+     cbnz w2, spin_unlock_loop_ee   // This should never been taken, but for some reason, some times stlxr fails (maybe for speculative execution?)
      sev                  // Wake-up processors in wfe
      ret                  // Return by branching to the address in the link register.
      .cfi_endproc
