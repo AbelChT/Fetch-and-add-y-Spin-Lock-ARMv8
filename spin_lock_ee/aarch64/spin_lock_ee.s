@@ -29,8 +29,7 @@ spin_unlock_ee:
      mov w1, #0
 spin_unlock_loop_ee:
      ldaxr w2, [x0]               // Needed to perform later stlxr w2, w1, [x0]
-     stlxr w2, w1, [x0]           // Store 0 in the spin_lock variable
+     stlxr w2, w1, [x0]           // Store 0 in the spin_lock variable and automatic send sev
      cbnz w2, spin_unlock_loop_ee // This will be taken if a context change happens between ldaxr and stlxr. Read proyect README for more info
-     sev                          // Wake-up processors in wfe
      ret                          // Return by branching to the address in the link register.
      .cfi_endproc
