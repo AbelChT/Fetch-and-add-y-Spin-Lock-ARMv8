@@ -58,6 +58,11 @@ https://github.com/Debian/raspi3-image-spec.
 
 En el propio proyecto aparecen instrucciones para su instalación.
 
+# Entorno de compilación utilizado
+Para realizarse los experimentos se ha realizado compilación cruzada utilizado el compilador AARCH64 de linaro con soporte a Linux, el cual se puede encontrar en la página oficial de ARM con el nombre aarch64-linux-gnu.
+
+https://developer.arm.com/open-source/gnu-toolchain/gnu-a/downloads
+
 # Evaluación de rendimiento
 
 # Misc
