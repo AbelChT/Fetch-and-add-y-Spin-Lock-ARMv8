@@ -41,6 +41,9 @@ Implementación de spin lock energéticamente eficiente y tests correspondientes
 
 
 # Evaluación de rendimiento
+## Tiempo
+
+## Velocidad
 
 # Misc
 En la carpeta misc, se encuentra una demostración de que si entre dos instrucciones ldaxr y stlxr el sistema operativo realiza un cambio de contexto, la exclusividad de la escritura se pierde. Esto es debido a que al llegar una interrupción se "ejectaría" automaticamente la instrucción CLREX, lo que hace que el registro de exclusividad se borre.
