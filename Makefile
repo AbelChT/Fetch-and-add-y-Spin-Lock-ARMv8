@@ -4,9 +4,10 @@ CC=/opt/gcc-arm-8.2-aarch64-linux-gnu/bin/aarch64-linux-gnu-
 # ARM AARCH32 OFFICIAL RASPBIAN compiler path
 # CC=/opt/raspberry-pi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf-
 
-all: test_spin_lock test_fetch_and_add test_spin_lock_ee app_reduce_2D_spin_lock app_reduce_2D_spin_lock_ee app_reduce_2D_naive_mutex exclusive_context_change \
-    thread_competition_spin_lock thread_competition_spin_lock_ee thread_competition_naive_mutex thread_competition_none_mutex \
-	thread_competition_spin_lock_o3 thread_competition_spin_lock_ee_o3 thread_competition_naive_mutex_o3 thread_competition_none_mutex_o3
+all: test_spin_lock test_fetch_and_add test_spin_lock_ee test_spin_lock_ee_b \
+    app_reduce_2D_spin_lock app_reduce_2D_spin_lock_ee app_reduce_2D_spin_lock_ee_b app_reduce_2D_naive_mutex exclusive_context_change \
+    thread_competition_spin_lock thread_competition_spin_lock_ee thread_competition_spin_lock_ee_b thread_competition_naive_mutex thread_competition_none_mutex \
+	thread_competition_spin_lock_o3 thread_competition_spin_lock_ee_o3 thread_competition_spin_lock_ee_o3_b thread_competition_naive_mutex_o3 thread_competition_none_mutex_o3
 
 # Spin lock
 spin_lock.o: spin_lock/aarch64/spin_lock.s
@@ -62,6 +63,28 @@ thread_competition_spin_lock_ee_o3: app/thread_competition.cpp spin_lock_lib_ee.
 clean_spin_lock_ee:
 	rm build/spin_lock_ee.o build/test_spin_lock_ee build/app_reduce_2D_spin_lock_ee build/spin_lock_lib_ee.o build/thread_competition_spin_lock_ee build/thread_competition_spin_lock_ee_o3
 
+# Spin lock EE B
+spin_lock_ee_b.o: spin_lock_ee_b/aarch64/spin_lock_ee_b.s
+	${CC}gcc -c spin_lock_ee_b/aarch64/spin_lock_ee_b.s -o build/spin_lock_ee_b.o
+
+test_spin_lock_ee_b: spin_lock_ee_b/test/test_spin_lock_ee_b.cpp spin_lock_ee_b.o
+	${CC}g++ -pthread spin_lock_ee_b/test/test_spin_lock_ee_b.cpp build/spin_lock_ee_b.o -o build/test_spin_lock_ee_b
+
+spin_lock_lib_ee_b.o: spin_lock_ee_b/lib/mutex_spin_lock_ee_b.cpp
+	${CC}g++ -c spin_lock_ee_b/lib/mutex_spin_lock_ee_b.cpp -o build/spin_lock_lib_ee_b.o
+
+app_reduce_2D_spin_lock_ee_b: app/app.cpp app/Reduce2D.cpp spin_lock_lib_ee_b.o spin_lock_ee_b.o
+	${CC}g++ -DSELECTED_MUTEX_TYPE=MUTEX_SPIN_LOCK_EE_B -pthread app/app.cpp app/Reduce2D.cpp build/spin_lock_lib_ee_b.o build/spin_lock_ee_b.o -o build/app_reduce_2D_spin_lock_ee_b
+
+thread_competition_spin_lock_ee_b: app/thread_competition.cpp spin_lock_lib_ee_b.o spin_lock_ee_b.o
+	${CC}g++ -DSELECTED_MUTEX_TYPE=MUTEX_SPIN_LOCK_EE_B -pthread app/thread_competition.cpp build/spin_lock_lib_ee_b.o build/spin_lock_ee_b.o -o build/thread_competition_spin_lock_ee_b
+
+thread_competition_spin_lock_ee_o3_b: app/thread_competition.cpp spin_lock_lib_ee_b.o spin_lock_ee_b.o
+	${CC}g++ -O3 -DSELECTED_MUTEX_TYPE=MUTEX_SPIN_LOCK_EE_B -pthread app/thread_competition.cpp build/spin_lock_lib_ee_b.o build/spin_lock_ee_b.o -o build/thread_competition_spin_lock_ee_o3_b
+
+clean_spin_lock_ee_b:
+	rm build/spin_lock_ee_b.o build/test_spin_lock_ee_b build/app_reduce_2D_spin_lock_ee_b build/spin_lock_lib_ee_b.o build/thread_competition_spin_lock_ee_b build/thread_competition_spin_lock_ee_o3_b
+
 # Naive mutex
 app_reduce_2D_naive_mutex: app/app.cpp app/Reduce2D.cpp
 	${CC}g++ -DSELECTED_MUTEX_TYPE=MUTEX_NAIVE -pthread app/app.cpp app/Reduce2D.cpp -o build/app_reduce_2D_naive_mutex
@@ -92,4 +115,4 @@ exclusive_context_change:
 clean_exclusive_context_change:
 	rm build/exclusive_context_change
 
-clean: clean_spin_lock clean_fetch_and_add clean_spin_lock_ee clean_naive_mutex clean_exclusive_context_change clean_none_mutex
+clean: clean_spin_lock clean_fetch_and_add clean_spin_lock_ee clean_naive_mutex clean_exclusive_context_change clean_none_mutex clean_spin_lock_ee_b
