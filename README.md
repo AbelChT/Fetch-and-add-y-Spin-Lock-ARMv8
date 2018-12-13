@@ -40,6 +40,11 @@ Implementación de spin lock energéticamente eficiente y tests correspondientes
 - lib: Implementación de un mutex utilizando las funciones creadas. 
 
 
+# Evaluación de rendimiento
+
+# Misc
+En la carpeta misc, se encuentra una demostración de que si entre dos instrucciones ldaxr y stlxr el sistema operativo realiza un cambio de contexto, la exclusividad de la escritura se pierde. Es decir aunque ningún otro thread escriba sobre la variable, la instrucción stlxr fallará cómo si hubiese perdido la exclusividad sobre la variable. Al realizarse un cambio de contexto no se almacena la exclusividad de las variables para luego restaurarlo.
+
 # Cuestiones
 ## Spin lock energéticamente eficiente
 #### ¿Dónde entra en modo de ahorro de energía el procesador?
@@ -47,6 +52,7 @@ En la instrucción wfe "se entra en modo de ahorro de energía", ya que el proce
 
 #### ¿Se entera el Sistema Operativo de que el procesador está en modo bajo consumo?
 El sistema operativo no tiene porque enterarse de que se está en bajo consumo, ya que el modo de bajo consumo, entre otras razones se suspende si llega una IRQ (cuando venza el quantum). 
+
 
 # Entorno de pruebas utilizado
 Las pruebas se han realizado sobre una Raspberry Pi 3 model B. Para poder utilizar las instrucciones nativas de este procesador se instaló una versión de Debian de 64 bits y ARMv8-A ya que el Raspbian nativo por mantener retrocompatibilidad no posee estas características, sino que utiliza ARMv7 de 32 bits.
@@ -62,8 +68,3 @@ En el propio proyecto aparecen instrucciones para su instalación.
 Para realizarse los experimentos se ha realizado compilación cruzada utilizado el compilador AARCH64 de linaro con soporte a Linux, el cual se puede encontrar en la página oficial de ARM con el nombre aarch64-linux-gnu.
 
 https://developer.arm.com/open-source/gnu-toolchain/gnu-a/downloads
-
-# Evaluación de rendimiento
-
-# Misc
-En la carpeta misc, se encuentra una demostración de que si entre dos instrucciones ldaxr y stlxr el sistema operativo realiza un cambio de contexto, la exclusividad de la escritura se pierde. Es decir aunque ningún otro thread escriba sobre la variable, la instrucción stlxr fallará cómo si hubiese perdido la exclusividad sobre la variable. Es decir, al realizarse un cambio de contexto no se almacena la exclusividad de las variables para luego restaurarlo.
