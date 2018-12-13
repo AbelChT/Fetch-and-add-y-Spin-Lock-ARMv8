@@ -4,7 +4,7 @@ CC=/opt/gcc-arm-8.2-aarch64-linux-gnu/bin/aarch64-linux-gnu-
 # ARM AARCH32 OFFICIAL RASPBIAN compiler path
 # CC=/opt/raspberry-pi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf-
 
-all: test_spin_lock test_fetch_and_add test_spin_lock_ee app_reduce_2D_spin_lock app_reduce_2D_spin_lock_ee app_reduce_2D_naive_mutex
+all: test_spin_lock test_fetch_and_add test_spin_lock_ee app_reduce_2D_spin_lock app_reduce_2D_spin_lock_ee app_reduce_2D_naive_mutex exclusive_context_change
 
 # Spin lock
 spin_lock.o: spin_lock/aarch64/spin_lock.s
@@ -55,4 +55,11 @@ app_reduce_2D_naive_mutex: app/app.cpp app/Reduce2D.cpp
 clean_reduce_2D_naive_mutex:
 	rm build/app_reduce_2D_naive_mutex
 
-clean: clean_spin_lock clean_fetch_and_add clean_spin_lock_ee clean_reduce_2D_naive_mutex
+# Misc
+exclusive_context_change:
+	${CC}g++  misc/exclusive_context_change.cpp misc/read_store_exclusive.s -o build/exclusive_context_change
+
+clean_exclusive_context_change:
+	rm build/exclusive_context_change
+
+clean: clean_spin_lock clean_fetch_and_add clean_spin_lock_ee clean_reduce_2D_naive_mutex clean_exclusive_context_change

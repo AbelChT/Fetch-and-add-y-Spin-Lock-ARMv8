@@ -26,7 +26,7 @@ spin_unlock:
 spin_unlock_loop:
      ldaxr w2, [x0]              // Needed to perform later stlxr w2, w1, [x0]
      stlxr w2, w1, [x0]          // Store 0 in the spin_lock variable
-     cbnz w2, spin_unlock_loop   // This should never been taken, but for some reason, some times stlxr fails (maybe for speculative execution?)
+     cbnz w2, spin_unlock_loop   // This will be taken if a context change happens between ldaxr and stlxr. Read proyect README for more info
      ret                         // Return by branching to the address in the link register.
      .cfi_endproc
      

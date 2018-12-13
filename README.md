@@ -59,3 +59,6 @@ https://github.com/Debian/raspi3-image-spec.
 En el propio proyecto aparecen instrucciones para su instalación.
 
 # Evaluación de rendimiento
+
+# Misc
+En la carpeta misc, se encuentra una demostración de que si entre dos instrucciones ldaxr y stlxr el sistema operativo realiza un cambio de contexto, la exclusividad de la escritura se pierde. Es decir aunque ningún otro thread escriba sobre la variable, la instrucción stlxr fallará cómo si hubiese perdido la exclusividad sobre la variable. Es decir, al realizarse un cambio de contexto no se almacena la exclusividad de las variables para luego restaurarlo.
