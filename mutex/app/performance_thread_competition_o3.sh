@@ -1,6 +1,10 @@
 #!/bin/bash
 
 #
+# Created by Abel Chils Trabanco
+#
+
+#
 # Script that launch all threads competitions and obtain the averange performance
 #
 

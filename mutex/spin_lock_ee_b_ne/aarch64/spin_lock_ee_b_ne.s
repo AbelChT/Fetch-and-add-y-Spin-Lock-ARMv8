@@ -27,7 +27,6 @@ spin_lock_ee_loop:
 spin_unlock_ee_b_ne:
      .cfi_startproc               // Function "spin_unlock" entry point.
      mov w1, #0
-spin_unlock_loop_ee:
      strb w1, [x0]                // Store 0 in the spin_lock variable
      sev                          // Send sev
      ret                          // Return by branching to the address in the link register.
