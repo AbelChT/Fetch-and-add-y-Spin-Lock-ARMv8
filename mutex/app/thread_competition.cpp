@@ -35,7 +35,7 @@ int main() {
 
     thread *thread_pool[NUMBER_OF_THREADS];
 
-    cout << "Thread race start ..." << endl;
+    //cout << "Thread race start ..." << endl;
     clock_t begin = clock();
 
     /**
@@ -56,9 +56,11 @@ int main() {
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 
-    cout << "Time taken: " << elapsed_secs << endl;
+    //cout << "Time taken: " << elapsed_secs << endl;
+    
+    cout << elapsed_secs << endl;
 
-    cout << "Winner thread: " << variable_to_set << endl;
+    //cout << "Winner thread: " << variable_to_set << endl;
 
     return 0;
 }

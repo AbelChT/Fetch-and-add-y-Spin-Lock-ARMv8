@@ -5,10 +5,10 @@ CC=/opt/gcc-arm-8.2-aarch64-linux-gnu/bin/aarch64-linux-gnu-
 # CC=/opt/raspberry-pi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf-
 
 # COMPILER OPTIMIZATION
-OPTIM=
+OPTIM=-O3
 
 # BUILD OUTPUT SUFFIX
-OUTPUT_SUFFIX=
+OUTPUT_SUFFIX=_o3
 
 all: all_spin_lock all_spin_lock_ee all_spin_lock_ee_b all_naive_mutex all_none_mutex exclusive_context_change all_spin_lock_ee_b_ne
 
