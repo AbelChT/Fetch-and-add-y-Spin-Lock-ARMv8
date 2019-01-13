@@ -1,12 +1,10 @@
 //
-// Created by abel on 12/13/18.
+// Created by abel on 09/01/19.
 //
 
 #include "mutex_selector.h"
 #include <thread>
 #include <iostream>
-
-#define TEST_SIZE 1000000
 
 /**
  * Number of threads to use
@@ -15,14 +13,44 @@
 
 using namespace std;
 
-int variable_to_set;
-
 mutex mtx;
 
-void thread_race(int thread_number){
+/**
+ * Critical section types
+ */
+#define CRITICAL_SECTION_SHORT 0
+#define CRITICAL_SECTION_LONG 1
+
+#ifndef SELECTED_CRITICAL_SECTION
+#error "SELECTED_CRITICAL_SECTION must be defined"
+#endif
+
+#if SELECTED_CRITICAL_SECTION == CRITICAL_SECTION_SHORT
+#define TEST_SIZE 1000000
+int variable_to_set;
+void __attribute__((optimize("O0"))) critical_section(int thread_number){
+    variable_to_set = thread_number;
+}
+#endif
+
+#if SELECTED_CRITICAL_SECTION == CRITICAL_SECTION_LONG
+#define TEST_SIZE 10000
+#define SIZE_OVERHEAD_LOOP 3000
+int variable_to_set;
+void __attribute__((optimize("O0"))) critical_section(int thread_number){
+    for(int j = 0; j < SIZE_OVERHEAD_LOOP; ++j){
+        variable_to_set = thread_number;
+    }
+}
+#endif
+
+/**
+ * Work that every thread do
+ */
+void thread_work(int thread_number){
     for (int i = 0; i < TEST_SIZE; ++i) {
         mtx.lock();
-        variable_to_set = thread_number;
+        critical_section(thread_number);
         mtx.unlock();
     }
 }
@@ -32,7 +60,6 @@ void thread_race(int thread_number){
  * @return
  */
 int main() {
-
     thread *thread_pool[NUMBER_OF_THREADS];
 
     //cout << "Thread race start ..." << endl;
@@ -42,7 +69,7 @@ int main() {
      * Create threads
      */
     for (unsigned int i = 0; i < NUMBER_OF_THREADS; i++) {
-        thread_pool[i] = new thread(thread_race, i);
+        thread_pool[i] = new thread(thread_work, i);
     }
 
     /**

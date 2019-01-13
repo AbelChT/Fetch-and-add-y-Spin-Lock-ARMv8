@@ -9,10 +9,10 @@
 #
 
 # File where metrics(averange) results will be stored 
-RESULTS_FILE="./results_avg_o3.txt"
+RESULTS_FILE="./results_avg_short_cs.txt"
 
 # File where all results will be stored in seconds
-ALL_RESULTS_FILE_CSV="./results_o3.csv"
+ALL_RESULTS_FILE_CSV="./results_short_cs.csv"
 
 # Number of iterations
 NUMBER_OF_ITERATIONS=10
@@ -22,12 +22,12 @@ TIME_TO_SLEEP_BETWEEN_ITERARIONS=4
 
 # Files that you want to test
 FILES_TO_TEST=(
-    thread_competition_naive_mutex_o3 
-    thread_competition_none_mutex_o3
-    thread_competition_spin_lock_o3 
-    thread_competition_spin_lock_ee_o3
-    thread_competition_spin_lock_ee_b_o3 
-    thread_competition_spin_lock_ee_b_ne_o3
+    mutex_benchmark_naive_mutex_short_cs_o3_e 
+    mutex_benchmark_none_mutex_short_cs_o3_e
+    mutex_benchmark_spin_lock_short_cs_o3_e 
+    mutex_benchmark_spin_lock_ee_short_cs_o3_e
+    mutex_benchmark_spin_lock_ee_b_short_cs_o3_e
+    mutex_benchmark_spin_lock_ee_b_ne_short_cs_o3_e
 )
 
 # Store the averange performance results
