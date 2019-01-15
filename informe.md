@@ -1,13 +1,3 @@
----
-title: "Sistemas empotrados II"
-author: [Abel Chils Trabanco]
-date: 15-1-2019
-subtitle: "Implementación y análisis de rendimiento de primitivas de exclusión mutua sobre ARMv8-A de 64 bits"
-titlepage: true
-longtable: true
-toc-own-page: true
----
-
 # Resumen
 
 En el siguiente trabajo se han implementado diferentes mecanismos de exclusión mutua para posteriormente compararlos tanto a nivel se consumo energético como a nivel de rendimiento sobre la arquitectura ARMv8-A de 64 bits (AARCH64), concretamente en una Raspberry Pi 3 model B ejecutando el sistema operativo Debian de 64 bits.
@@ -22,7 +12,7 @@ Al realizar pruebas de energía, solamente se utilizo la versión con una secci�
 
 Por ello para un sistema empotrado en el cual la administración de la energía consumida es importante, la opción de mutex energéticamente eficiente ha de ser siempre elegida respecto a la de mutex simple debido a que el 3% de aumento de rendimiento en cuanto a tiempo que implica un mutex simple, no justifica el 199% más de consumo que este posee.
 
-\newpage
+ 
 
 # Introducción
 
@@ -32,7 +22,7 @@ Sobre todos ellos se han realizado test unitarios para comprobar su correcto fun
 
 Por otro lado, se a realizado una comparativa de rendimiento y eficiencia energética sobre cinco mutex creados sobre las implementaciones del spin lock simple y los diferentes tipos de spin lock energéticamente eficientes, así como el mutex el proporcionado por la librería estándar del lenguaje C++.
 
-\newpage
+ 
 
 # Entorno de pruebas utilizado
 
@@ -52,7 +42,7 @@ Para realizarse los experimentos se ha realizado compilación cruzada utilizado 
 
 https://developer.arm.com/open-source/gnu-toolchain/gnu-a/downloads
 
-\newpage
+ 
 
 # Implementación y explicación del Fetch And Add
 
@@ -70,7 +60,7 @@ fetch_and_add:               // Function "fetch_and_add" entry point.
 
 En ella nos aseguramos de repetir la operación tantas veces sea necesario hasta que se realiza un fetch and add en exclusión mutua (solamente se hace efectivo el resultado de la que se realiza en exclusión mutua).
 
-\newpage
+ 
 
 # Implementación y explicación de los Spin Lock
 
@@ -106,7 +96,7 @@ spin_unlock_loop:
 
 En ella el comportamiento es el típico de un spin unlock salvo porque se usan para desbloquearlo las primitivas ldaxrn y stlxr. El bucle de comprobación sobre el estado de la escritura es necesario debido a que entre la instrucción de lectura y la de escritura puede suceder un cambio de contexto. En ese caso se pierde el token de exclusividad y falla la escritura.
 
-\newpage
+ 
 
 ## Spin Lock energéticamente eficiente
 
@@ -132,7 +122,7 @@ La implementación se basa en el spin lock anterior, pero en este caso una vez f
 
 La implementación que se ha creado de la primitiva spin unlock es idéntica al caso anterior, ya que en el momento que se produce una escritura sobre la variable con la instrucción stlxr, se envía un evento que saca a los núcleos del modo ahorro de energía.
 
-\newpage
+ 
 
 ## Spin Lock energéticamente eficiente utilizando instrucciones de memoria de bytes
 
@@ -166,7 +156,7 @@ spin_unlock_loop_ee:
 ```
 Las implementaciones son idénticas al caso anterior salvo porque las instrucciones ldaxr y stlxr han sido sustituidas por las instrucciones que trabajan con bytes ldaxrb y stlxrb. Esta optimización pretende ahorrar energía y tiempo al tener que transportar solamente un byte en vez de 4 de la implementación anterior.
 
-\newpage
+ 
 
 ## Spin Lock energéticamente eficiente utilizando instrucciones de memoria de bytes optimizada
 
@@ -182,7 +172,7 @@ spin_unlock_ee_b_ne:              // Function "spin_unlock" entry point.
 
 En el se ha eliminado el bucle que se necesitaba en el spin unlock, al realizar la escritura con la instrucción strb. En este caso sería necesario enviar un evento con sev para poder despertar al resto de hilos.
 
-\newpage
+ 
 
 # Creación de mutex basados en los Spin-Lock
 
@@ -250,7 +240,7 @@ public:
 
 En él se puede seleccionar o uno de los tipos de mutex creados, el nativo de C++, o no seleccionar ningún tipo de mutex, en este caso el lock y el unlock se sustituirán por nops.
 
-\newpage
+ 
 
 # Implementación y explicación de los programas de pruebas
 
@@ -321,7 +311,7 @@ void Reduce2D::thread_sum(int v[], unsigned int n, mutex &mtx, int &global_varia
 }
 ```
 
-\newpage
+ 
 
 ## Mutex benchmark
 
@@ -402,7 +392,7 @@ int main() {
 }
 ```
 
-\newpage
+ 
 
 # Implementación y explicación del script para obtención de métricas de rendimiento
 
@@ -491,7 +481,7 @@ do
 done
 ```
 
-\newpage
+ 
 
 # Evaluación de rendimiento
 
@@ -533,7 +523,7 @@ Tras dos iteraciones realizadas en el script performance_mutex_benchmark.sh conf
 
 Al comparar el resto de mutex, se puede comprobar como los mutex implementados sobre spin locks energéticamente eficientes obtienen menos rendimiento que el mutex implementado sobre un spin lock no energéticamente eficiente, aunque la diferencia es bastante baja.
 
-\newpage
+ 
 
 ## Energéticas
 
@@ -559,7 +549,7 @@ La versión llamada sistema operativo representa el consumo que posee el sistema
 
 Como se puede comprobar, hay una diferencia notable en el consumo total entre los mutex energéticamente eficientes y el no energéticamente eficiente. Entre los mutex energéticamente eficientes apenas hay diferencias en el consumo total.
 
-\newpage
+ 
 
 ## Comparativa entre Spin lock simple y Spin lock energéticamente eficiente
 
@@ -612,7 +602,7 @@ En este caso, el mutex implementado sobre un spin lock simple consume un 199% m�
 
 Como se puede comprobar, la implementación con mutex energéticamente eficiente reduce drásticamente el consumo del procesador.
 
-\newpage
+ 
 
 # Cuestiones
 
@@ -626,7 +616,7 @@ En la instrucción wfe "se entra en modo de ahorro de energía", ya que el proce
 
 El sistema operativo no tiene porque enterarse de que se está en bajo consumo, ya que el modo de bajo consumo, entre otras razones se suspende si llega una IRQ (cuando venza el quantum). 
 
-\newpage
+ 
 
 # Repositorio del proyecto en GitHub
 
