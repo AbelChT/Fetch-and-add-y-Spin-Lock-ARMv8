@@ -300,7 +300,7 @@ void Reduce2D::thread_sum(int v[], unsigned int n, mutex &mtx, int &global_varia
 
 /newpage
 ## Mutex benchmark
-Aplicación creada para la evaluación de los mutex en un escenario de uso intensivo. En esta, los diferentes threads lucharán por un recurso compartido utilizando los mutex para ello. En este benchmark existen dos opciones de compilación. En la primera se crea una sección crítica muy larga, y en la segunda una corta en la que se ha reducido el tiempo de computación de labores distintas al uso de los mutex al mínimo imprescindible.
+El programa mutex benchmark se ha creado con la itención de evaluar los mutex en un escenario de uso intensivo. En él, los diferentes threads lucharán por un recurso compartido utilizando los mutex para ello. Existen dos opciones de compilación, en la primera se crea una sección crítica muy larga, y en la segunda una corta en la que se ha reducido el tiempo de computación de labores distintas al uso de los mutex, al mínimo imprescindible.
 
 Su implementación es la siguiente:
 
@@ -379,8 +379,11 @@ int main() {
 
 /newpage
 # Implementación y explicación del script para obtención de métricas de rendimiento
-Script que ejecuta el programa mutex benchmark para las diferentes implementaciones un número definido de iteraciones y evalua su rendimiento. Para ello crea un fichero csv en el que almacena el resultado de cada una de las iteraciones para un posterior análisis así como obtiene la media de las ejecuciones de cada implementación. Para usarlo primero se han de compilar las diferentes implementaciones mediante el fichero Makefile y posteriormente se ha de colocar el script en la carpeta build.
+Este script ejecuta el programa mutex benchmark para las diferentes implementaciones un número definido de iteraciones y evalua su rendimiento. Para ello crea un fichero csv en el que almacena el resultado de cada una de las iteraciones para un posterior análisis, así como obtiene la media de las ejecuciones de cada implementación en un fichero aparte. Para usarlo, primero se han de compilar las diferentes implementaciones mediante el fichero Makefile y posteriormente se ha de colocar el script en la carpeta build.
+
 Actualmente está configurado para medir el rendimiento del programa mutex benchmark con sección crítica corta.
+
+Su implementación es la siguiente:
 
 ``` sh
 #
@@ -463,19 +466,19 @@ done
 
 /newpage
 # Evaluación de rendimiento
-La evaluación de rendimiento se realizó sobre el entorno de pruebas que se describirá posteriormente con el sistema operativo en estado de ejecución nº1 y utilizando el programa mutex benchmark comentado en la sección anterior. Para almacenar los resultados se utilizó el script performance_mutex_benchmark.sh.
+La evaluación de rendimiento se realizó sobre el entorno de pruebas que se describió al principio del informe, con el sistema operativo en estado de ejecución nº1 y utilizando el programa mutex benchmark comentado anteriormente, y para almacenar los resultados se utilizó el script performance_mutex_benchmark.sh también comentado anteriormente.
 
 ## Tiempo
 Tras 30 iteraciones realizadas en el script performance_mutex_benchmark.sh configurado para ejecutar el benchmark con región crítica corta, se obtuvieron los siguientes resultados. Todos ellos se expresan en segundos y son relativos al tiempo de uso del procesador en las diferentes versiones de las implementaciones del mutex, esto es para evitar contar en todo lo posible tiempo que el sistema operativo dedica a otras tareas. Al poseer 4 núcleos el sistema, el tiempo de ejecución es mucho menor al de uso del procesador.
 
-| Versión | Sin mutex | Mutex Nativo C++ | Spin lock simple | Spin lock energéticamente eficiente | Spin lock energéticamente eficiente loads y stores con bytes | Spin lock energéticamente eficiente loads y stores con bytes optimizado |
+| Versión | Sin mutex | Mutex Nativo C++ | Spin lock simple | Spin lock energéticamente eficiente | Spin lock energéticamente eficiente instrucciones de memoria de bytes | Spin lock energéticamente eficiente instrucciones de memoria de bytes optimizado |
 |-------------|-------------|-----|-------------|-------------|-----|-----|
 | media (s) | 0.4267 | 14.6513 | 17.3540 | 17.5425 | 17.7751 | 14.3856 |
 | desviación típica (s) | 0.0014 | 0.0455 | 0.5489 | 0.5003 | 0.6902 | 0.5441 |
 | mínimo (s) | 0.4259 | 14.5592 | 16.5428 | 16.3294 | 16.2221 | 13.1974 |
 | máximo (s) | 0.4320 | 14.7715 | 18.6714 | 18.7380 | 19.0890 | 15.3787 |
 
-Como se puede comprobar, en media el más rápido es el spin lock energéticamente eficiente con loads y stores utilizando instrucciones de bytes y optimizando los stores, pero su desviación típica es bastante elevada.
+Como se puede comprobar, en media el más rápido es el spin lock energéticamente eficiente con instrucciones de memoria de bytes y optimizando los spin unlock, pero su desviación típica es bastante elevada. Por otro lado se puede ver como el Spin lock simple posee mejor rendimiento que el Spin lock energéticamente eficiente.
 
 Tras dos iteraciones realizadas en el script performance_mutex_benchmark.sh configurado para ejecutar el benchmark con región crítica larga, se obtuvieron los siguientes resultados. Todos ellos se expresan en segundos y son relativos al tiempo de uso del procesador en las diferentes versiones de las implementaciones del mutex.
 
@@ -489,7 +492,7 @@ Al comparar el resto de mutex, se puede comprobar como los mutex implementados s
 
 /newpage
 ## Energéticas
-Tras dos iteraciones realizadas en el script performance_mutex_benchmark.sh configurado para ejecutar el benchmark con región crítica larga, se obtuvieron los siguientes resultados. Los tiempos son expresados en segundos y son relativos a los tiempos de ejecución, los consumos medios son expresados en Watts y el consumo total durante la ejecución es expresado en julios.
+Tras tres iteraciones realizadas en el script performance_mutex_benchmark.sh configurado para ejecutar el benchmark con región crítica larga, se obtuvieron los siguientes resultados. Los tiempos son expresados en segundos y son relativos a los tiempos de ejecución, los consumos medios son expresados en Watts y el consumo total durante la ejecución es expresado en julios.
 
 Las mediciones de potencia han sido realizadas entre el transformador y la placa (en el cable de alimentación antes de entrar a la placa).
 
