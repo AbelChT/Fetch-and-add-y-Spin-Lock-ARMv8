@@ -1,5 +1,5 @@
 # Introducción
-En el siguiente trabajo se han implementado diferentes mecanismos de exclusión mutua para posteriormente compararlos tanto a nivel se consumo energético como a nivel de rendimiento en la arquitectura ARMv8 de 64 bits (AARCH64). Por un lado se ha implementado un spin lock simple y una versión energéticamente eficiente y por otro lado se ha implementado la primitiva fetch and add. 
+En el siguiente trabajo se han implementado diferentes mecanismos de exclusión mutua para posteriormente compararlos tanto a nivel se consumo energético como a nivel de rendimiento en la arquitectura ARMv8 de 64 bits (AARCH64). Por un lado se ha implementado un spin lock simple y diferentes versiones energéticamente eficiente y por otro lado se ha implementado la primitiva fetch and add. 
 
 Sobre todos ellos se han realizado test unitarios para comprobar su correcto funcionamiento.
 

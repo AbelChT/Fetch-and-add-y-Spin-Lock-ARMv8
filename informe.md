@@ -1,68 +1,432 @@
 # Introducción
-En el siguiente trabajo se han implementado diferentes mecanismos de exclusión mutua para posteriormente compararlos tanto a nivel se consumo energético como a nivel de rendimiento en la arquitectura ARMv8 de 64 bits (AARCH64). Por un lado se ha implementado un spin lock simple y una versión energéticamente eficiente y por otro lado se ha implementado la primitiva fetch and add. 
+En el siguiente trabajo se han implementado diferentes mecanismos de exclusión mutua para posteriormente compararlos tanto a nivel se consumo energético como a nivel de rendimiento en la arquitectura ARMv8 de 64 bits (AARCH64). Por un lado se ha implementado un spin lock simple y diferentes versiones energéticamente eficiente y por otro lado se ha implementado la primitiva fetch and add. 
 
 Sobre todos ellos se han realizado test unitarios para comprobar su correcto funcionamiento.
 
-Por otro lado, se a realizado una comparativa de rendimiento sobre cinco mutex creados sobre las bases de las implementaciones del spin lock simple, el spin lock energéticamente eficiente, el spin lock energéticamente eficiente utilizando loads y stores de byte, el spin lock energéticamente eficiente utilizando loads y stores de byte optimizando el spin unlock y el proporcionado por la librería estándar del lenguaje C++.
+Por otro lado, se a realizado una comparativa de rendimiento y eficiencia energética sobre cinco mutex creados sobre las implementaciones del spin lock simple y los diferentes tipos de spin lock energéticamente eficientes así como el mutex el proporcionado por la librería estándar del lenguaje C++.
 
-# Descripción de los fuentes: fetch and add
-En esta carpeta se encuentra todo lo relacionado con el fetch and add.
+# Entorno de pruebas utilizado
+Las pruebas se han realizado sobre una Raspberry Pi 3 model B. Para poder utilizar las instrucciones nativas de este procesador se instaló una versión de Debian de 64 bits y ARMv8-A ya que el Raspbian nativo por mantener retrocompatibilidad no posee estas características, sino que utiliza ARMv7 de 32 bits.
 
-## Carpeta build
-Se almacenarán los resultados de las compilaciones
+### Instalación de Debian
+El sistema instalado fue el siguiente:
 
-## Carpeta fetch_and_add
-Implementación de fetch and add y tests unitarios correspondientes.
+https://github.com/Debian/raspi3-image-spec.
 
-### Ficheros
-- aarch64/fetch_and_add.s: Implementación del fetch and add.
-- test/test_fetch_and_add.cpp: Test unitarios sobre la implementación en ensamblador.
+En el propio proyecto de Github aparecen instrucciones para su instalación.
 
-## Fichero Makefile
-Fichero que compila los test unitarios a un fichero ejecutable.
+# Entorno de compilación utilizado
+Para realizarse los experimentos se ha realizado compilación cruzada utilizado el compilador AARCH64 de linaro con soporte a Linux, el cual se puede encontrar en la página oficial de ARM con el nombre aarch64-linux-gnu.
 
-Antes de utilizar este fichero, hay que modificarlo para establecer la variable CC (path del compilador) de forma apropiada.
+https://developer.arm.com/open-source/gnu-toolchain/gnu-a/downloads
 
-# Descripción de los fuentes: mutex
-En esta carpeta se encuentra todo lo relacionado con los spin locks creados, así como los mutex que derivan de estos.
+# Implementación y explicación del Fetch And Add
+La implementación que se ha creado de la primitiva fetch and add es la siguiente:
 
-## Carpeta build
-Se almacenarán los resultados de las compilaciones
+``` asm
+fetch_and_add:               // Function "fetch_and_add" entry point.
+     ldaxr w2, [x0]
+     add w4, w1, w2
+     stlxr w3, w4, [x0]
+     cbnz w3, fetch_and_add
+     mov w0, w2              // Return the value before execute fetch_and_add
+     ret                     // Return by branching to the address in the link register.
+```
 
-## Carpeta app
-Aquí se encuentran dos aplicación creada especialmente para probar el rendimiento de los diferentes spin locks creados.
+En ella nos aseguramos de repetir la operación tantas veces sea necesario hasta que se realiza un fetch and add en exclusión mutua (solamente se hace efectiva la que se realiza en exclusión mutua).
 
-### Ficheros
-- mutex_selector.h: Declaración de los diferentes mutex que se pueden utilizar durante las pruebas.
-- Reduce2D.h y Reduce2D.cpp: Reductor de 2D a 1D multithread mediante suma de las componentes. Esta suma de hace de una forma muy poco eficiente para hacer un gran uso de los mutex.
-- app.cpp: Aplicación que hace uso de la biblioteca Reduce2D creada.
-- mutex_benchmark.cpp: Aplicación creada para la evaluación de los mutex en un escenario de uso intensivo. En esta, los diferentes threads lucharán por un recurso compartido utilizando los mutex para ello. En este benchmark existen dos opciones de compilación. En la primera se crea una sección crítica muy larga, y en la segunda una corta en la que se ha reducido el tiempo de computación de labores distintas al uso de los mutex al mínimo imprescindible.
+# Implementación y explicación de los Spin Lock
+## Spin Lock simple
+La implementación que se ha creado de la primitiva spin lock es la siguiente:
 
-## Carpetas spin_lock, spin_lock_ee, spin_lock_ee_b y spin_lock_ee_b_ne
-En estas carpetas se encuentras las implementaciones de los distintos spin locks, los mutex creados a partir de ellos, así como los test unitarios correspondientes.
+``` asm
+spin_lock:                 // Function "spin_lock" entry point.
+     mov w3, #1
+spin_lock_loop:       
+     ldaxr w1, [x0]
+     cmp w1, #0
+     bne spin_lock_loop
+     stlxr w2, w3, [x0]
+     cbnz w2, spin_lock_loop   
+     ret                  // Return by branching to the address in the link register.
+```
 
-### Correspondencia de carpetas
-- spin_lock: spin lock simple
-- spin_lock_ee: spin lock energéticamente eficiente
-- spin_lock_ee_b: spin lock energéticamente eficiente utilizando loads y stores de byte
-- spin_lock_ee_b_ne: spin lock energéticamente eficiente utilizando loads y stores de byte optimizando el spin unlock
+En ella se posee el comportamiento típico de un spin lock, en el cual se intenta obtener un lock sobre una variable, y en caso de que no se pueda, se vuelve a intentar. Para ello se han usado las instrucciones ldaxrn y stlxr, que en el momento de leer se adquiere un token de exclusividad, y si antes de una escritura otro hilo ha escrito, esta falla, en caso contrario realiza la escritura y se libera el token.
 
-### Ficheros
-- aarch64/spin_lock.s: Implementación del spin lock.
-- test/test_spin_lock.cpp: Test unitarios sobre la implementación en ensamblador.
-- lib: Implementación de un mutex utilizando las funciones creadas. 
+La implementación que se ha creado de la primitiva spin unlock es la siguiente:
 
-## Fichero Makefile
-Fichero que compila los test unitarios a un fichero ejecutable, así como los diferentes programas para evaluar el rendimiento.
+``` asm
+spin_unlock:                   // Function "spin_unlock" entry point.
+     mov w1, #0
+spin_unlock_loop:
+     ldaxr w2, [x0]              // Needed to perform later stlxr w2, w1, [x0]
+     stlxr w2, w1, [x0]          // Store 0 in the spin_lock variable
+     cbnz w2, spin_unlock_loop   // This will be taken if a context change happens between ldaxr and stlxr. 
+     ret                         // Return by branching to the address in the link register.
+```
 
-Antes de utilizar este fichero, hay que modificarlo para establecer la variable CC (path del compilador) de forma apropiada.
+En ella el comportamiento es el típico de un spin unlock salvo porque se usan para desbloquearlo las primitivas ldaxrn y stlxr. El bucle de comprobación sobre el estado de la escritura es necesario debido a que entre la instrucción de lectura y la de escritura puede suceder un cambio de contexto. En ese caso se pierde el token de exclusividad y falla la escritura.
 
-## Fichero performance_mutex_benchmark.sh
+## Spin Lock energéticamente eficiente
+La implementación que se ha creado de la primitiva spin lock es la siguiente:
+
+``` asm
+spin_lock_ee:              // Function "spin_lock" entry point.
+     // send ourselves an event, so we don't stick on the wfe at the
+     // top of the loop
+     mov w3, #1
+     sevl
+spin_lock_ee_loop:
+     wfe
+     ldaxr w1, [x0]
+     cmp w1, #0
+     bne spin_lock_ee_loop
+     stlxr w2, w3, [x0]
+     cbnz w2, spin_lock_ee_loop   
+     ret                  // Return by branching to the address in the link register.
+```
+
+La implementación se basa en el spin lock anterior, pero en este caso una vez fallada la obteción de la exclusividad se coloca el procesador en modo de ahorro de energía con la instrucción wfe hasta que el thread que posea la exclusividad sobre la variable la libere.
+
+La implementación que se ha creado de la primitiva spin unlock es identica al caso anterior, ya que en el momento que se produce una escritura sobre la variable para liberarla con la instrucción stlxr, se envía un evento que saca a los núcleos del modo ahorro de energía.
+
+## Spin Lock energéticamente eficiente utilizando instrucciones de bytes
+La implementación que se ha creado de la primitiva spin lock es la siguiente:
+``` asm
+spin_lock_ee_b:              // Function "spin_lock" entry point.
+     // send ourselves an event, so we don't stick on the wfe at the
+     // top of the loop
+     mov w3, #1
+     sevl
+spin_lock_ee_loop:
+     wfe
+     ldaxrb w1, [x0]
+     cmp w1, #0
+     bne spin_lock_ee_loop
+     stlxrb w2, w3, [x0]
+     cbnz w2, spin_lock_ee_loop   
+     ret                  // Return by branching to the address in the link register.
+```
+
+La implementación que se ha creado de la primitiva spin unlock es la siguiente:
+
+``` asm
+spin_unlock_ee_b:                  // Function "spin_unlock" entry point.
+     mov w1, #0
+spin_unlock_loop_ee:
+     ldaxrb w2, [x0]               // Needed to perform later stlxr w2, w1, [x0]
+     stlxrb w2, w1, [x0]           // Store 0 in the spin_lock variable and automatic send sev
+     cbnz w2, spin_unlock_loop_ee // This will be taken if a context change happens between ldaxr and stlxr. Read proyect README for more info
+     ret     
+```
+Las implementaciones son idénticas al caso anterior salvo porque las instrucciones ldaxr y stlxr han sido sustituidas por las instrucciones que trabajan con bytes ldaxrb y stlxrb. Esta optimización pretende ahorrar energía y tiempo al tener que transportar solamente un byte en vez de 4 en la implementación anterior.
+
+## Spin Lock energéticamente eficiente utilizando instrucciones de bytes optimizada
+
+Esta versión se ha basado en la anterior y solamente se ha modificado el spin unlock que ha quedado de la siguiente forma:
+
+``` asm
+spin_unlock_ee_b_ne:              // Function "spin_unlock" entry point.
+     mov w1, #0
+     strb w1, [x0]                // Store 0 in the spin_lock variable
+     sev                          // Send sev
+     ret                          // Return by branching to the address in the link register.
+```
+
+En el se ha eliminado el bucle que se necesitaba en el spin unlock, al realizar la escritura con la instrucción strb. En este caso sería necesario enviar un evento con sev para poder despertar al resto de hilos.
+
+# Creación de mutex basados en los Spin-Lock
+
+La implementación de los mutex basados en los diferentes tipos de spin locks es iguan en todos los casos:
+
+``` c
+// spin_lock.cpp
+
+extern "C" void spin_lock(int *x);
+extern "C" void spin_unlock(int *x);
+
+mutex::mutex() : lock_variable(0) {}
+
+void mutex::lock() {
+    spin_lock(&lock_variable);
+}
+
+void mutex::unlock() {
+    spin_unlock(&lock_variable);
+}
+```
+
+En ella se llama a spin lock sobre una variable al hacer el lock del mutex y a spin unlock sobre la misma al realizar el unlock.
+
+Para poder utilizar los distintos tipos de mutex en los programas de pruebas de una forma sencilla, y al todos poseer la misma interfaz, se ha creado una interfaz que en tiempo de compilación permite seleccionar que tipo de mutex se desea usar, la cual es la siguiente:
+
+``` c++
+/**
+ * Different mutex types to select
+ */
+#ifndef SELECTED_MUTEX_TYPE
+#error "SELECTED_MUTEX_TYPE must be defined"
+#endif
+
+#if SELECTED_MUTEX_TYPE == MUTEX_NAIVE
+
+#include <mutex>
+
+#endif
+
+#if SELECTED_MUTEX_TYPE == MUTEX_SPIN_LOCK
+#include "../spin_lock/lib/mutex_spin_lock.h"
+#endif
+
+#if SELECTED_MUTEX_TYPE == MUTEX_SPIN_LOCK_EE
+#include "../spin_lock_ee/lib/mutex_spin_lock_ee.h"
+#endif
+
+#if SELECTED_MUTEX_TYPE == MUTEX_SPIN_LOCK_EE_B
+#include "../spin_lock_ee_b/lib/mutex_spin_lock_ee_b.h"
+#endif
+
+#if SELECTED_MUTEX_TYPE == MUTEX_SPIN_LOCK_EE_B_NE
+#include "../spin_lock_ee_b_ne/lib/mutex_spin_lock_ee_b_ne.h"
+#endif
+
+#if SELECTED_MUTEX_TYPE == MUTEX_NONE
+class mutex{
+public:
+    void lock(){ asm("nop"); }
+    void unlock(){ asm("nop"); }
+};
+#endif
+```
+
+En ella se puede seleccionar o uno de los tipos de mutex creados, el nativo de C++, o no seleccionar ningún tipo de mutex, en este caso el lock y el unlock se sustituirán por NOP.
+
+# Implementación y explicación de los programas de pruebas
+## Reduce2D
+El programa Reduce2D, realiza una reducción de un vector a un escalar en multithread mediante suma de las componentes. Esta suma de hace de una forma muy poco eficiente para hacer un gran uso de los mutex.
+
+Su implementación es la siguiente:
+``` c++
+/**
+ * Made a sum reduction over elements in v
+ * v -> Vector over reduction will be done
+ * n -> Number of elements of v
+ */
+int Reduce2D::parSum(int v[], unsigned int n) {
+    mutex mutex_variable;
+    int global_result = 0;
+    thread *thread_pool[NUMBER_OF_THREADS];
+
+    unsigned int work_for_thread[NUMBER_OF_THREADS];
+
+    unsigned int thread_start_position[NUMBER_OF_THREADS];
+
+    unsigned int work_left = n;
+
+    /**
+     * Calculate the work for every thread
+     */
+    for (unsigned int i = NUMBER_OF_THREADS; i >= 1; i--) {
+        work_for_thread[i - 1] = work_left / i;
+        work_left = work_left - (work_left / i);
+        thread_start_position[i - 1] = work_left;
+    }
+
+
+    /**
+     * Create threads
+     */
+    for (unsigned int i = 0; i < NUMBER_OF_THREADS; i++) {
+        thread_pool[i] = new thread(thread_sum, &v[thread_start_position[i]], work_for_thread[i],
+                                    ref(mutex_variable), ref(global_result));
+    }
+
+    /**
+     * Wait for threads and delete
+     */
+    for (unsigned int i = 0; i < NUMBER_OF_THREADS; i++) {
+        thread_pool[i]->join();
+        delete thread_pool[i];
+    }
+
+    return global_result;
+}
+
+/**
+ * n -> number of elements to process by the thread
+ */
+void Reduce2D::thread_sum(int v[], unsigned int n, mutex &mtx, int &global_variable) {
+    for (int i = 0; i < n; ++i) {
+        // Mux lock
+        mtx.lock();
+
+        global_variable = global_variable + v[i];
+
+        // Mux unlock
+        mtx.unlock();
+    }
+}
+```
+## Mutex benchmark
+Aplicación creada para la evaluación de los mutex en un escenario de uso intensivo. En esta, los diferentes threads lucharán por un recurso compartido utilizando los mutex para ello. En este benchmark existen dos opciones de compilación. En la primera se crea una sección crítica muy larga, y en la segunda una corta en la que se ha reducido el tiempo de computación de labores distintas al uso de los mutex al mínimo imprescindible.
+
+Su implementación es la siguiente:
+
+``` c++
+mutex mtx;
+
+/**
+ * Critical section types
+ */
+#define CRITICAL_SECTION_SHORT 0
+#define CRITICAL_SECTION_LONG 1
+
+#if SELECTED_CRITICAL_SECTION == CRITICAL_SECTION_SHORT
+#define TEST_SIZE 1000000
+int variable_to_set;
+void __attribute__((optimize("O0"))) critical_section(int thread_number){
+    variable_to_set = thread_number;
+}
+#endif
+
+#if SELECTED_CRITICAL_SECTION == CRITICAL_SECTION_LONG
+#define TEST_SIZE 10000
+#define SIZE_OVERHEAD_LOOP 3000
+int variable_to_set;
+void __attribute__((optimize("O0"))) critical_section(int thread_number){
+    for(int j = 0; j < SIZE_OVERHEAD_LOOP; ++j){
+        variable_to_set = thread_number;
+    }
+}
+#endif
+
+/**
+ * Work that every thread do
+ */
+void thread_work(int thread_number){
+    for (int i = 0; i < TEST_SIZE; ++i) {
+        mtx.lock();
+        critical_section(thread_number);
+        mtx.unlock();
+    }
+}
+
+/**
+ * Competition over threads to be the last in write over a variable
+ * @return
+ */
+int main() {
+    thread *thread_pool[NUMBER_OF_THREADS];
+
+    clock_t begin = clock();
+
+    /**
+     * Create threads
+     */
+    for (unsigned int i = 0; i < NUMBER_OF_THREADS; i++) {
+        thread_pool[i] = new thread(thread_work, i);
+    }
+
+    /**
+     * Wait for threads and delete
+     */
+    for (unsigned int i = 0; i < NUMBER_OF_THREADS; i++) {
+        thread_pool[i]->join();
+        delete thread_pool[i];
+    }
+
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+
+    // CPU time taken
+    cout << elapsed_secs << endl;
+
+    return 0;
+}
+```
+
+# Implementación y explicación del script para obtención de métricas de rendimiento
 Script que ejecuta el programa mutex benchmark para las diferentes implementaciones un número definido de iteraciones y evalua su rendimiento. Para ello crea un fichero csv en el que almacena el resultado de cada una de las iteraciones para un posterior análisis así como obtiene la media de las ejecuciones de cada implementación. Para usarlo primero se han de compilar las diferentes implementaciones mediante el fichero Makefile y posteriormente se ha de colocar el script en la carpeta build.
 Actualmente está configurado para medir el rendimiento del programa mutex benchmark con sección crítica corta.
 
-## Carpeta misc
-En la carpeta misc, se encuentra una demostración de que si entre dos instrucciones ldaxr y stlxr el sistema operativo realiza un cambio de contexto, la exclusividad de la escritura se pierde. Esto es debido a que al llegar una interrupción, el registro de exclusividad se borra, produciendo el mismo efecto que si se ejecutara la instrucción CLREX.
+``` sh
+#
+# Script that launch all threads competitions and obtain the averange performance
+#
+
+# File where metrics(averange) results will be stored 
+RESULTS_FILE="./results_avg_short_cs.txt"
+
+# File where all results will be stored in seconds
+ALL_RESULTS_FILE_CSV="./results_short_cs.csv"
+
+# Number of iterations
+NUMBER_OF_ITERATIONS=10
+
+# Seconds to sleep between iterations to decrease board temperature
+TIME_TO_SLEEP_BETWEEN_ITERARIONS=4
+
+# Files that you want to test
+FILES_TO_TEST=(
+    mutex_benchmark_naive_mutex_short_cs_o3_e 
+    mutex_benchmark_none_mutex_short_cs_o3_e
+    mutex_benchmark_spin_lock_short_cs_o3_e 
+    mutex_benchmark_spin_lock_ee_short_cs_o3_e
+    mutex_benchmark_spin_lock_ee_b_short_cs_o3_e
+    mutex_benchmark_spin_lock_ee_b_ne_short_cs_o3_e
+)
+
+# Store the averange performance results
+declare -A performance_results_avg
+
+# Empty ALL_RESULTS_FILE_CSV if exists and create if not
+> $ALL_RESULTS_FILE_CSV
+
+# Initialize the hash map and init ALL_RESULTS_FILE_CSV
+for application in ${FILES_TO_TEST[*]}
+do
+    performance_results_avg[$application]=0
+    echo -n "$application;" >> $ALL_RESULTS_FILE_CSV
+done
+
+# Prepare to write results
+echo >> $ALL_RESULTS_FILE_CSV
+
+# Execute the applications to get the metrics
+for i in $(seq 1 $NUMBER_OF_ITERATIONS)
+do
+    echo "---------------- Iteration $i of $NUMBER_OF_ITERATIONS ----------------" 
+
+	for application in ${FILES_TO_TEST[*]}
+    do
+        echo "Executing $application"
+        iteration_result=$("./$application")
+        echo -n "$iteration_result;" >> $ALL_RESULTS_FILE_CSV
+        # Utility bc is not installed so we need to use awk
+        performance_results_avg[$application]=$(echo - | awk "{print ${performance_results_avg[$application]} + $iteration_result}")
+        # performance_results_avg[$application]=$(echo "${performance_results_avg[$application]} + $iteration_result" | bc)
+        sleep $TIME_TO_SLEEP_BETWEEN_ITERARIONS
+    done
+
+    # Prepare to write next results
+    echo >> $ALL_RESULTS_FILE_CSV
+
+    echo
+done
+
+# Init RESULTS_FILE
+echo "Test done on" > $RESULTS_FILE
+date >> $RESULTS_FILE
+echo "" >> $RESULTS_FILE
+
+# Write averange to RESULTS_FILE
+echo "Averange execution time (seconds)" >> $RESULTS_FILE
+for application in ${FILES_TO_TEST[*]}
+do
+    actual_performance=$(echo - | awk "{print ${performance_results_avg[$application]} / $NUMBER_OF_ITERATIONS}")
+    echo "$application: $actual_performance" >> $RESULTS_FILE
+done
+```
 
 # Evaluación de rendimiento
 La evaluación de rendimiento se realizó sobre el entorno de pruebas que se describirá posteriormente con el sistema operativo en estado de ejecución nº1 y utilizando el programa mutex benchmark comentado en la sección anterior. Para almacenar los resultados se utilizó el script performance_mutex_benchmark.sh.
@@ -154,21 +518,6 @@ En este caso, el mutex implementado sobre un spin lock simple consume un 199% m�
 
 Como se puede comprobar, la implementación con mutex energeticamente eficiente reduce drásticamente el consumo del procesador.
 
-# Entorno de pruebas utilizado
-Las pruebas se han realizado sobre una Raspberry Pi 3 model B. Para poder utilizar las instrucciones nativas de este procesador se instaló una versión de Debian de 64 bits y ARMv8-A ya que el Raspbian nativo por mantener retrocompatibilidad no posee estas características, sino que utiliza ARMv7 de 32 bits.
-
-### Instalación de Debian
-El sistema instalado fue el siguiente:
-
-https://github.com/Debian/raspi3-image-spec.
-
-En el propio proyecto aparecen instrucciones para su instalación.
-
-# Entorno de compilación utilizado
-Para realizarse los experimentos se ha realizado compilación cruzada utilizado el compilador AARCH64 de linaro con soporte a Linux, el cual se puede encontrar en la página oficial de ARM con el nombre aarch64-linux-gnu.
-
-https://developer.arm.com/open-source/gnu-toolchain/gnu-a/downloads
-
 # Cuestiones
 ## Spin lock energéticamente eficiente
 #### ¿Dónde entra en modo de ahorro de energía el procesador?
@@ -176,3 +525,7 @@ En la instrucción wfe "se entra en modo de ahorro de energía", ya que el proce
 
 #### ¿Se entera el Sistema Operativo de que el procesador está en modo bajo consumo?
 El sistema operativo no tiene porque enterarse de que se está en bajo consumo, ya que el modo de bajo consumo, entre otras razones se suspende si llega una IRQ (cuando venza el quantum). 
+
+# Repositorio del proyecto en GitHub
+El proyecto completo se encuentra en el siguiente repositorio en GitHub:
+- https://github.com/AbelChT/Fetch-and-add-y-Spin-Lock-ARMv8
