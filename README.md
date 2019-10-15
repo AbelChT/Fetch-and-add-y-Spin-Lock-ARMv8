@@ -171,3 +171,5 @@ En este caso, el mutex implementado sobre un spin lock simple consume un 199% m�
 
 Como se puede comprobar, la implementación con mutex energeticamente eficiente reduce drásticamente el consumo del procesador.
 
+## Licencia
+Todo el código que se encuentra en este repositorio, a menos que se indique lo contrario, posee la licencia GNU GPLv3. Para mas información sobre esta, consultar el fichero `LICENSE` de este repositorio.
